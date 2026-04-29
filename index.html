@@ -150,7 +150,18 @@ function copyWhatsApp() {
 
 function downloadPDF() {
       const element = document.getElementById("invoice");
-        html2pdf().from(element).save("invoice.pdf");
+        if (!element.innerHTML.trim()) {
+          alert("Please generate the invoice first!");
+          return;
+        }
+        const opt = {
+          margin: 0.5,
+          filename: 'invoice.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
 }
 
 function saveCustomer() {
