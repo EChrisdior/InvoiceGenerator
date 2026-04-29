@@ -2,55 +2,57 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Simple Invoice Generator</title>
+<title>Invoice Pro SA</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 body {
-	font-family: Arial;
-	padding: 20px;
-	background: #f5f5f5;
+      font-family: Arial;
+        background: #f4f4f4;
+          padding: 15px;
 }
 
 .container {
-	max-width: 700px;
-	margin: auto;
-	background: white;
-	padding: 20px;
-	border-radius: 10px;
+      max-width: 800px;
+        margin: auto;
+          background: white;
+            padding: 20px;
+              border-radius: 10px;
 }
 
 input, button {
-	padding: 10px;
-	margin: 5px 0;
-	width: 100%;
+      width: 100%;
+        padding: 10px;
+          margin: 5px 0;
 }
 
 button {
-	background: black;
-	color: white;
-	border: none;
-	cursor: pointer;
+      background: black;
+        color: white;
+          border: none;
+            cursor: pointer;
 }
 
 .item {
-	display: flex;
-	gap: 10px;
+      display: flex;
+        gap: 5px;
 }
 
 .item input {
-	flex: 1;
+      flex: 1;
 }
 
 .invoice {
-	margin-top: 20px;
-	padding: 15px;
-	border: 1px solid #ddd;
+      margin-top: 20px;
+        padding: 15px;
+          border: 1px solid #ddd;
 }
 
 .total {
-	font-size: 20px;
-	font-weight: bold;
+      font-size: 20px;
+        font-weight: bold;
 }
 </style>
 </head>
@@ -59,11 +61,11 @@ button {
 
 <div class="container">
 
-<h2>Invoice Generator</h2>
+<h2>📄 Invoice Pro SA</h2>
 
 <input id="business" placeholder="Business Name">
 <input id="customer" placeholder="Customer Name">
-<input id="phone" placeholder="Customer WhatsApp Number">
+<input id="phone" placeholder="WhatsApp Number (e.g. 27831234567)">
 
 <h3>Items</h3>
 <div id="items"></div>
@@ -71,7 +73,9 @@ button {
 <button onclick="addItem()">+ Add Item</button>
 
 <button onclick="generateInvoice()">Generate Invoice</button>
-<button onclick="copyWhatsApp()">Copy for WhatsApp</button>
+<button onclick="sendWhatsApp()">Send via WhatsApp</button>
+<button onclick="copyWhatsApp()">Copy Text</button>
+<button onclick="downloadPDF()">Download PDF</button>
 
 <div id="invoice" class="invoice"></div>
 
@@ -80,59 +84,85 @@ button {
 <script>
 
 let items = [];
+let invoiceNumber = "INV-" + Math.floor(Math.random() * 10000);
+let date = new Date().toLocaleDateString();
 
 function addItem() {
-	const id = items.length;
-	items.push({desc:"", price:0});
+      const id = items.length;
+        items.push({desc:"", qty:1, price:0});
 
-	const div = document.createElement("div");
-	div.className = "item";
-	div.innerHTML = `
-		<input placeholder="Description" onchange="updateDesc(${id}, this.value)">
-		<input type="number" placeholder="Price" onchange="updatePrice(${id}, this.value)">
-	`;
-	document.getElementById("items").appendChild(div);
-}
-
-function updateDesc(i, val) {
-	items[i].desc = val;
-}
-
-function updatePrice(i, val) {
-	items[i].price = parseFloat(val) || 0;
+          const div = document.createElement("div");
+            div.className = "item";
+              div.innerHTML = `
+                  <input placeholder="Description" onchange="items[${id}].desc = this.value">
+                      <input type="number" placeholder="Qty" value="1" onchange="items[${id}].qty = this.value">
+                          <input type="number" placeholder="Price" onchange="items[${id}].price = this.value">
+                            `;
+                              document.getElementById("items").appendChild(div);
 }
 
 function generateInvoice() {
-	const business = document.getElementById("business").value;
-	const customer = document.getElementById("customer").value;
+      const business = document.getElementById("business").value;
+        const customer = document.getElementById("customer").value;
 
-	let total = 0;
-	let html = `<h3>${business}</h3>`;
-	html += `<p>Customer: ${customer}</p><hr>`;
+          let total = 0;
 
-	items.forEach(item => {
-		html += `<p>${item.desc} - R${item.price.toFixed(2)}</p>`;
-		total += item.price;
-	});
+            let html = `
+                <h2>${business}</h2>
+                    <p><strong>Invoice:</strong> ${invoiceNumber}</p>
+                        <p><strong>Date:</strong> ${date}</p>
+                            <p><strong>Customer:</strong> ${customer}</p>
+                                <hr>
+                                  `;
 
-	html += `<hr><p class="total">Total: R${total.toFixed(2)}</p>`;
+                                    items.forEach(item => {
+                                            let line = item.qty * item.price;
+                                                total += line;
 
-	document.getElementById("invoice").innerHTML = html;
+                                                    html += `<p>${item.desc} (${item.qty}) - R${line.toFixed(2)}</p>`;
+                                    });
 
-	localStorage.setItem("lastInvoice", html);
+                                      html += `
+                                          <hr>
+                                              <p class="total">Total: R${total.toFixed(2)}</p>
+                                                  <p style="font-size:12px; opacity:0.6;">Generated with Invoice Pro SA</p>
+                                                    `;
+
+                                                      document.getElementById("invoice").innerHTML = html;
+
+                                                        saveCustomer();
+}
+
+function getWhatsAppText() {
+      return document.getElementById("invoice").innerText;
+}
+
+function sendWhatsApp() {
+      const phone = document.getElementById("phone").value;
+        const text = encodeURIComponent(getWhatsAppText());
+          window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
 }
 
 function copyWhatsApp() {
-	const invoice = document.getElementById("invoice").innerText;
-	navigator.clipboard.writeText(invoice);
-	alert("Copied for WhatsApp!");
+      navigator.clipboard.writeText(getWhatsAppText());
+        alert("Copied!");
 }
 
-window.onload = () => {
-	const saved = localStorage.getItem("lastInvoice");
-	if (saved) {
-		document.getElementById("invoice").innerHTML = saved;
-	}
+function downloadPDF() {
+      const element = document.getElementById("invoice");
+        html2pdf().from(element).save("invoice.pdf");
+}
+
+function saveCustomer() {
+      const name = document.getElementById("customer").value;
+        const phone = document.getElementById("phone").value;
+
+          if (!name || !phone) return;
+
+            let customers = JSON.parse(localStorage.getItem("customers")) || [];
+
+              customers.push({name, phone});
+                localStorage.setItem("customers", JSON.stringify(customers));
 }
 
 </script>
