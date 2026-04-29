@@ -5,7 +5,8 @@
 <title>Invoice Pro SA</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body {
@@ -151,7 +152,7 @@ function generateInvoice() {
                                                                                                                               <td>R${Number(item.price).toFixed(2)}</td>
                                                                                                                                       <td>R${line.toFixed(2)}</td>
                                                                                                                                             </tr>
-                                                                                                `;
+                                                                                                                                                `;
                                                                                 });
 
                                                                                   html += `
@@ -180,48 +181,46 @@ function copyWhatsApp() {
         alert("Copied!");
 }
 
-function downloadPDF() {
+async function downloadPDF() {
       const element = document.getElementById("invoice");
-        if (!element.innerHTML.trim()) {
-          alert("Please generate the invoice first!");
-          return;
-        }
 
-        const clone = element.cloneNode(true);
-          clone.style.background = '#fff';
-          clone.style.padding = '20px';
-          clone.style.boxSizing = 'border-box';
-          clone.style.width = '760px';
+      if (!element.innerHTML.trim()) {
+            alert("Please generate the invoice first before downloading a PDF.");
+            return;
+      }
 
-        const wrapper = document.createElement('div');
-          wrapper.style.position = 'absolute';
-          wrapper.style.left = '-9999px';
-          wrapper.style.top = '0';
-          wrapper.style.background = '#fff';
-          wrapper.style.padding = '20px';
-          wrapper.style.width = '800px';
-          wrapper.style.boxSizing = 'border-box';
-          wrapper.appendChild(clone);
-          document.body.appendChild(wrapper);
+      try {
+            const canvas = await html2canvas(element, {
+                  scale: 2,
+                  useCORS: true,
+                  backgroundColor: '#ffffff'
+            });
 
-        const opt = {
-          margin: 10,
-          filename: 'invoice.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            windowWidth: 800,
-            windowHeight: wrapper.scrollHeight,
-            scrollY: -window.scrollY
-          },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] }
-        };
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            let heightLeft = imgHeight;
+            let position = 0;
 
-        html2pdf().set(opt).from(wrapper).save().then(() => {
-          wrapper.remove();
-        });
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
+
+            while (heightLeft > 0) {
+                  position = heightLeft - imgHeight;
+                  pdf.addPage();
+                  pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                  heightLeft -= pdfHeight;
+            }
+
+            pdf.save('invoice.pdf');
+      } catch (error) {
+            console.error('PDF export failed:', error);
+            alert('Unable to create PDF. Please try again or refresh the page.');
+      }
 }
 
 function saveCustomer() {
