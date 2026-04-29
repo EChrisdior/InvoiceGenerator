@@ -154,14 +154,33 @@ function downloadPDF() {
           alert("Please generate the invoice first!");
           return;
         }
+
+        const clone = element.cloneNode(true);
+          clone.style.background = '#fff';
+          clone.style.padding = '20px';
+          clone.style.boxSizing = 'border-box';
+          clone.style.width = '760px';
+
+        const wrapper = document.createElement('div');
+          wrapper.style.background = '#fff';
+          wrapper.style.padding = '20px';
+          wrapper.style.width = '800px';
+          wrapper.style.boxSizing = 'border-box';
+          wrapper.appendChild(clone);
+          document.body.appendChild(wrapper);
+
         const opt = {
-          margin: 0.5,
+          margin: 0.4,
           filename: 'invoice.pdf',
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+          html2canvas: { scale: 2, useCORS: false, windowWidth: 800, windowHeight: wrapper.scrollHeight },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] }
         };
-        html2pdf().set(opt).from(element).save();
+
+        html2pdf().set(opt).from(wrapper).save().then(() => {
+          wrapper.remove();
+        });
 }
 
 function saveCustomer() {
