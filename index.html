@@ -46,13 +46,31 @@ button {
 
 .invoice {
       margin-top: 20px;
-        padding: 15px;
+        padding: 20px;
           border: 1px solid #ddd;
+            background: white;
+              width: 100%;
+                max-width: 700px;
+                  box-sizing: border-box;
+}
+
+.table {
+      width: 100%;
+        border-collapse: collapse;
+          margin-top: 10px;
+}
+
+.table th, .table td {
+      border-bottom: 1px solid #ddd;
+        padding: 8px;
+          text-align: left;
 }
 
 .total {
       font-size: 20px;
         font-weight: bold;
+          text-align: right;
+            margin-top: 10px;
 }
 </style>
 </head>
@@ -112,25 +130,39 @@ function generateInvoice() {
                     <p><strong>Invoice:</strong> ${invoiceNumber}</p>
                         <p><strong>Date:</strong> ${date}</p>
                             <p><strong>Customer:</strong> ${customer}</p>
-                                <hr>
-                                  `;
 
-                                    items.forEach(item => {
-                                            let line = item.qty * item.price;
-                                                total += line;
+                                <table class="table">
+                                      <tr>
+                                              <th>Description</th>
+                                                      <th>Qty</th>
+                                                              <th>Price</th>
+                                                                      <th>Total</th>
+                                                                            </tr>
+                                                                              `;
 
-                                                    html += `<p>${item.desc} (${item.qty}) - R${line.toFixed(2)}</p>`;
-                                    });
+                                                                                items.forEach(item => {
+                                                                                        let line = item.qty * item.price;
+                                                                                            total += line;
 
-                                      html += `
-                                          <hr>
-                                              <p class="total">Total: R${total.toFixed(2)}</p>
-                                                  <p style="font-size:12px; opacity:0.6;">Generated with Invoice Pro SA</p>
-                                                    `;
+                                                                                                html += `
+                                                                                                      <tr>
+                                                                                                              <td>${item.desc}</td>
+                                                                                                                      <td>${item.qty}</td>
+                                                                                                                              <td>R${Number(item.price).toFixed(2)}</td>
+                                                                                                                                      <td>R${line.toFixed(2)}</td>
+                                                                                                                                            </tr>
+                                                                                                `;
+                                                                                });
 
-                                                      document.getElementById("invoice").innerHTML = html;
+                                                                                  html += `
+                                                                                      </table>
+                                                                                          <p class="total">Total: R${total.toFixed(2)}</p>
+                                                                                              <p style="font-size:12px; opacity:0.6;">Generated with Invoice Pro SA</p>
+                                                                                                `;
 
-                                                        saveCustomer();
+                                                                                                  document.getElementById("invoice").innerHTML = html;
+
+                                                                                                    saveCustomer();
 }
 
 function getWhatsAppText() {
@@ -162,6 +194,9 @@ function downloadPDF() {
           clone.style.width = '760px';
 
         const wrapper = document.createElement('div');
+          wrapper.style.position = 'absolute';
+          wrapper.style.left = '-9999px';
+          wrapper.style.top = '0';
           wrapper.style.background = '#fff';
           wrapper.style.padding = '20px';
           wrapper.style.width = '800px';
@@ -170,11 +205,17 @@ function downloadPDF() {
           document.body.appendChild(wrapper);
 
         const opt = {
-          margin: 0.4,
+          margin: 10,
           filename: 'invoice.pdf',
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: false, windowWidth: 800, windowHeight: wrapper.scrollHeight },
-          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            windowWidth: 800,
+            windowHeight: wrapper.scrollHeight,
+            scrollY: -window.scrollY
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] }
         };
 
