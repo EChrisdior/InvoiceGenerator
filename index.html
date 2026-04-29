@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Simple Invoice Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+	font-family: Arial;
+	padding: 20px;
+	background: #f5f5f5;
+}
+
+.container {
+	max-width: 700px;
+	margin: auto;
+	background: white;
+	padding: 20px;
+	border-radius: 10px;
+}
+
+input, button {
+	padding: 10px;
+	margin: 5px 0;
+	width: 100%;
+}
+
+button {
+	background: black;
+	color: white;
+	border: none;
+	cursor: pointer;
+}
+
+.item {
+	display: flex;
+	gap: 10px;
+}
+
+.item input {
+	flex: 1;
+}
+
+.invoice {
+	margin-top: 20px;
+	padding: 15px;
+	border: 1px solid #ddd;
+}
+
+.total {
+	font-size: 20px;
+	font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Invoice Generator</h2>
+
+<input id="business" placeholder="Business Name">
+<input id="customer" placeholder="Customer Name">
+<input id="phone" placeholder="Customer WhatsApp Number">
+
+<h3>Items</h3>
+<div id="items"></div>
+
+<button onclick="addItem()">+ Add Item</button>
+
+<button onclick="generateInvoice()">Generate Invoice</button>
+<button onclick="copyWhatsApp()">Copy for WhatsApp</button>
+
+<div id="invoice" class="invoice"></div>
+
+</div>
+
+<script>
+
+let items = [];
+
+function addItem() {
+	const id = items.length;
+	items.push({desc:"", price:0});
+
+	const div = document.createElement("div");
+	div.className = "item";
+	div.innerHTML = `
+		<input placeholder="Description" onchange="updateDesc(${id}, this.value)">
+		<input type="number" placeholder="Price" onchange="updatePrice(${id}, this.value)">
+	`;
+	document.getElementById("items").appendChild(div);
+}
+
+function updateDesc(i, val) {
+	items[i].desc = val;
+}
+
+function updatePrice(i, val) {
+	items[i].price = parseFloat(val) || 0;
+}
+
+function generateInvoice() {
+	const business = document.getElementById("business").value;
+	const customer = document.getElementById("customer").value;
+
+	let total = 0;
+	let html = `<h3>${business}</h3>`;
+	html += `<p>Customer: ${customer}</p><hr>`;
+
+	items.forEach(item => {
+		html += `<p>${item.desc} - R${item.price.toFixed(2)}</p>`;
+		total += item.price;
+	});
+
+	html += `<hr><p class="total">Total: R${total.toFixed(2)}</p>`;
+
+	document.getElementById("invoice").innerHTML = html;
+
+	localStorage.setItem("lastInvoice", html);
+}
+
+function copyWhatsApp() {
+	const invoice = document.getElementById("invoice").innerText;
+	navigator.clipboard.writeText(invoice);
+	alert("Copied for WhatsApp!");
+}
+
+window.onload = () => {
+	const saved = localStorage.getItem("lastInvoice");
+	if (saved) {
+		document.getElementById("invoice").innerHTML = saved;
+	}
+}
+
+</script>
+
+</body>
+</html>
